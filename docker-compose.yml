@@ -30,9 +30,8 @@ services:
       - "8080:8080"
     volumes:
       - ./jiuselu_server:/app/jiuselu_server:ro
-      - ./config.yaml:/app/config.yaml:ro
     working_dir: /app
-    command: /app/jiuselu_server -c /app/config.yaml
+    command: /app/jiuselu_server
     environment:
       - TZ=Asia/Shanghai
       - DB_HOST=mysql
@@ -40,6 +39,11 @@ services:
       - DB_USER=${MYSQL_USER:-crawler}
       - DB_PASSWORD=${MYSQL_PASSWORD:-crawler123}
       - DB_NAME=${MYSQL_DATABASE:-jiuselu}
+      - SITE_BASE_URL=${SITE_BASE_URL}
+      - SITE_PROXY=${SITE_PROXY}
+      - CRAWLER_CONCURRENCY=${CRAWLER_CONCURRENCY:-60}
+      - CRAWLER_MAX_RETRIES=${CRAWLER_MAX_RETRIES:-3}
+      - SERVER_PORT=${SERVER_PORT:-:8080}
     networks:
       - jiuselu_network
     healthcheck:
@@ -58,7 +62,6 @@ services:
         condition: service_healthy
     volumes:
       - ./jiuselu_crawler:/app/jiuselu_crawler:ro
-      - ./config.yaml:/app/config.yaml:ro
     working_dir: /app
     environment:
       - TZ=Asia/Shanghai
@@ -67,6 +70,11 @@ services:
       - DB_USER=${MYSQL_USER:-crawler}
       - DB_PASSWORD=${MYSQL_PASSWORD:-crawler123}
       - DB_NAME=${MYSQL_DATABASE:-jiuselu}
+      - SITE_BASE_URL=${SITE_BASE_URL}
+      - SITE_PROXY=${SITE_PROXY}
+      - CRAWLER_CONCURRENCY=${CRAWLER_CONCURRENCY:-60}
+      - CRAWLER_MAX_RETRIES=${CRAWLER_MAX_RETRIES:-3}
+      - SERVER_PORT=${SERVER_PORT:-:8080}
     networks:
       - jiuselu_network
     command: >
