@@ -10,7 +10,6 @@ NC='\033[0m'
 
 # 仓库信息
 GITHUB_REPO="olaria01/hpp"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
 info() {
     echo -e "${GREEN}[INFO]${NC} $1"
@@ -134,69 +133,49 @@ verify_checksums() {
 install_binaries() {
     cd "$DOWNLOAD_DIR"
 
-    # 如果当前目录下有 jiuselu_server，说明是项目部署目录，直接更新
-    if [ -f "$ORIGINAL_DIR/jiuselu_server" ]; then
+    # 检测是否在项目部署目录
+    if [ -f "$ORIGINAL_DIR/jiuselu_server" ] || [ -f "$ORIGINAL_DIR/docker-compose.yml" ]; then
         info "检测到项目部署目录，正在原地更新文件..."
         IS_UPDATE="true"
-        
-        # 更新 Server
-        info "更新 $ORIGINAL_DIR/jiuselu_server"
-        rm -f "$ORIGINAL_DIR/jiuselu_server"
-        mv jiuselu_server_linux_amd64 "$ORIGINAL_DIR/jiuselu_server"
-        chmod +x "$ORIGINAL_DIR/jiuselu_server"
-        
-        # 更新 Crawler（统一使用 jiuselu_crawler 文件名）
-        info "更新 $ORIGINAL_DIR/jiuselu_crawler"
-        rm -f "$ORIGINAL_DIR/jiuselu_crawler" "$ORIGINAL_DIR/jiuselu_crawler_bin" "$ORIGINAL_DIR/jiuselu-crawler" 2>/dev/null || true
-        mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu_crawler"
-        chmod +x "$ORIGINAL_DIR/jiuselu_crawler"
-        
-        # 更新 docker-compose.yml
-        if [ -f "docker-compose.yml" ]; then
-            if [ -f "$ORIGINAL_DIR/docker-compose.yml" ]; then
-                info "更新 $ORIGINAL_DIR/docker-compose.yml"
-                cp docker-compose.yml "$ORIGINAL_DIR/docker-compose.yml"
-            else
-                info "创建 $ORIGINAL_DIR/docker-compose.yml"
-                cp docker-compose.yml "$ORIGINAL_DIR/docker-compose.yml"
-            fi
-        fi
-        
-        # 创建 .env 文件（如果不存在）
-        if [ -f ".env.example" ]; then
-            if [ ! -f "$ORIGINAL_DIR/.env" ]; then
-                info "创建 $ORIGINAL_DIR/.env"
-                cp .env.example "$ORIGINAL_DIR/.env"
-                warn "请编辑 .env 文件修改数据库密码等敏感信息"
-            else
-                info ".env 文件已存在，跳过创建"
-            fi
-        fi
-        
-        info "✅ 本地文件更新完成"
-        return
-    fi
-
-    # 否则安装到系统目录
-    info "安装二进制文件到 $INSTALL_DIR..."
-
-    if [ ! -w "$INSTALL_DIR" ]; then
-        warn "需要 sudo 权限安装到 $INSTALL_DIR"
-        SUDO="sudo"
     else
-        SUDO=""
+        info "初始化项目部署目录..."
+        IS_UPDATE="false"
     fi
-
-    # 清理旧文件并移动新文件 (rm 用于避免 Text file busy)
-    $SUDO rm -f "$INSTALL_DIR/jiuselu-crawler"
-    $SUDO mv jiuselu_crawler_linux_amd64 "$INSTALL_DIR/jiuselu-crawler"
-    $SUDO chmod +x "$INSTALL_DIR/jiuselu-crawler"
-    info "已安装 jiuselu-crawler"
-
-    $SUDO rm -f "$INSTALL_DIR/jiuselu-server"
-    $SUDO mv jiuselu_server_linux_amd64 "$INSTALL_DIR/jiuselu-server"
-    $SUDO chmod +x "$INSTALL_DIR/jiuselu-server"
-    info "已安装 jiuselu-server"
+    
+    # 更新/安装 Server
+    info "安装 $ORIGINAL_DIR/jiuselu_server"
+    rm -f "$ORIGINAL_DIR/jiuselu_server"
+    mv jiuselu_server_linux_amd64 "$ORIGINAL_DIR/jiuselu_server"
+    chmod +x "$ORIGINAL_DIR/jiuselu_server"
+    
+    # 更新/安装 Crawler（统一使用 jiuselu_crawler 文件名）
+    info "安装 $ORIGINAL_DIR/jiuselu_crawler"
+    rm -f "$ORIGINAL_DIR/jiuselu_crawler" "$ORIGINAL_DIR/jiuselu_crawler_bin" "$ORIGINAL_DIR/jiuselu-crawler" 2>/dev/null || true
+    mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu_crawler"
+    chmod +x "$ORIGINAL_DIR/jiuselu_crawler"
+    
+    # 更新/创建 docker-compose.yml
+    if [ -f "docker-compose.yml" ]; then
+        if [ -f "$ORIGINAL_DIR/docker-compose.yml" ]; then
+            info "更新 $ORIGINAL_DIR/docker-compose.yml"
+        else
+            info "创建 $ORIGINAL_DIR/docker-compose.yml"
+        fi
+        cp docker-compose.yml "$ORIGINAL_DIR/docker-compose.yml"
+    fi
+    
+    # 创建 .env 文件（如果不存在）
+    if [ -f ".env.example" ]; then
+        if [ ! -f "$ORIGINAL_DIR/.env" ]; then
+            info "创建 $ORIGINAL_DIR/.env"
+            cp .env.example "$ORIGINAL_DIR/.env"
+            warn "请编辑 .env 文件修改数据库密码等敏感信息"
+        else
+            info ".env 文件已存在，跳过创建"
+        fi
+    fi
+    
+    info "✅ 文件安装完成"
 }
 
 cleanup() {
@@ -250,23 +229,27 @@ show_completion() {
         info "更新完成！"
         info "============================================"
         info "当前版本: $LATEST_VERSION"
-        info "已原地更新二进制文件"
+        info "已更新二进制文件和配置"
         info "服务已自动重启"
     else
         info "安装完成！"
         info "============================================"
+        info "当前版本: $LATEST_VERSION"
         echo ""
-        info "已安装以下命令:"
-        echo "  - jiuselu-crawler: 爬虫程序"
-        echo "  - jiuselu-server:  API 服务器"
+        info "已安装文件："
+        echo "  - jiuselu_server:       API 服务器"
+        echo "  - jiuselu_crawler:      爬虫程序"
+        echo "  - docker-compose.yml:   Docker 编排配置"
+        echo "  - .env:                 环境变量配置"
         echo ""
-        info "使用方法:"
-        echo "  jiuselu-crawler full    # 运行全量爬取"
-        echo "  jiuselu-crawler incr    # 运行增量爬取"
-        echo "  jiuselu-server          # 启动 API 服务器"
+        info "下一步操作："
+        echo "  1. 编辑 .env 文件，修改数据库密码等配置"
+        echo "  2. 编辑 config.yaml 文件，配置应用参数"
+        echo "  3. 启动服务: docker-compose up -d"
+        echo "  4. 查看日志: docker-compose logs -f"
         echo ""
-        info "更新提示:"
-        echo "  # 重新运行此脚本即可更新到最新版本（自动重启服务）"
+        info "更新提示："
+        echo "  重新运行此脚本即可更新到最新版本（自动重启服务）"
         echo "  curl -fsSL https://raw.githubusercontent.com/$GITHUB_REPO/main/install.sh | bash"
     fi
     echo ""
