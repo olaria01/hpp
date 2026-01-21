@@ -194,29 +194,29 @@ restart_services() {
         return
     fi
     
-    # 查找 jiuselu 相关容器（排除 mysql）
-    local containers=$(docker ps --filter "name=jiuselu" --format "{{.Names}}" 2>/dev/null | grep -v "jiuselu_mysql")
-    
-    if [ -z "$containers" ]; then
-        warn "未检测到运行中的 jiuselu 服务容器"
+    # 检查是否有 docker-compose.yml
+    if [ ! -f "$ORIGINAL_DIR/docker-compose.yml" ]; then
+        warn "未检测到 docker-compose.yml，跳过服务重启"
         return
     fi
     
-    info "检测到以下容器："
-    echo "$containers" | while read container; do
-        echo "  - $container"
-    done
+    info "重启服务（重新加载环境变量）..."
+    cd "$ORIGINAL_DIR"
     
-    # 自动重启容器
-    echo ""
-    info "自动重启服务中（跳过 MySQL）..."
-    echo "$containers" | while read container; do
-        if docker restart "$container" >/dev/null 2>&1; then
-            info "✓ 已重启: $container"
-        else
-            warn "✗ 重启失败: $container"
-        fi
-    done
+    # 使用 docker compose down 和 up -d 确保环境变量更新
+    if docker compose down >/dev/null 2>&1; then
+        info "✓ 已停止服务"
+    else
+        warn "✗ 停止服务失败"
+        return
+    fi
+    
+    if docker compose up -d >/dev/null 2>&1; then
+        info "✓ 已启动服务"
+    else
+        warn "✗ 启动服务失败"
+        return
+    fi
     
     info "服务重启完成"
 }
