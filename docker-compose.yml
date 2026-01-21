@@ -1,0 +1,70 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: jiuselu_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: jiuselu
+      MYSQL_USER: crawler
+      MYSQL_PASSWORD: crawler123
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jiuselu_network
+
+  server:
+    image: alpine:latest
+    container_name: jiuselu_server
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./jiuselu_server:/app/jiuselu_server:ro
+      - ./config.yaml:/app/config.yaml:ro
+    working_dir: /app
+    command: /app/jiuselu_server -c /app/config.yaml
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - jiuselu_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  crawler:
+    image: alpine:latest
+    container_name: jiuselu_cron
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./jiuselu_crawler:/app/jiuselu_crawler:ro
+      - ./config.yaml:/app/config.yaml:ro
+    working_dir: /app
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - jiuselu_network
+    command: >
+      sh -c 'echo "0 */4 * * * /app/jiuselu_crawler incr 20 >> /var/log/jiuselu_crawler.log 2>&1" | crontab - && crond -f -l 2'
+
+networks:
+  jiuselu_network:
+    driver: bridge
+
+volumes:
+  mysql_data:

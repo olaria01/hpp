@@ -94,6 +94,12 @@ download_binaries() {
         "https://github.com/$GITHUB_REPO/releases/download/$LATEST_VERSION/jiuselu_server_linux_amd64" \
         || error "下载 server 失败"
 
+    info "下载 docker-compose.yml..."
+    wget -q --show-progress \
+        "https://raw.githubusercontent.com/$GITHUB_REPO/main/docker-compose.yml" \
+        -O docker-compose.yml \
+        || warn "下载 docker-compose.yml 失败，跳过"
+
     info "下载 checksums..."
     wget -q \
         "https://github.com/$GITHUB_REPO/releases/download/$LATEST_VERSION/checksums.txt" \
@@ -145,6 +151,17 @@ install_binaries() {
             rm -f "$ORIGINAL_DIR/jiuselu-crawler" 2>/dev/null || true
             mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu-crawler" 2>/dev/null || mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu_crawler"
             chmod +x "$ORIGINAL_DIR/jiuselu_crawler" 2>/dev/null || chmod +x "$ORIGINAL_DIR/jiuselu-crawler"
+        fi
+        
+        # 更新 docker-compose.yml
+        if [ -f "docker-compose.yml" ]; then
+            if [ -f "$ORIGINAL_DIR/docker-compose.yml" ]; then
+                info "更新 $ORIGINAL_DIR/docker-compose.yml"
+                cp docker-compose.yml "$ORIGINAL_DIR/docker-compose.yml"
+            else
+                info "创建 $ORIGINAL_DIR/docker-compose.yml"
+                cp docker-compose.yml "$ORIGINAL_DIR/docker-compose.yml"
+            fi
         fi
         
         info "✅ 本地文件更新完成"
