@@ -1,0 +1,74 @@
+name: Build and Release
+
+on:
+  repository_dispatch:
+    types: [build-trigger]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone private repository
+        env:
+          PRIVATE_TOKEN: ${{ secrets.PRIVATE_TOKEN }}
+        run: |
+          git clone https://${PRIVATE_TOKEN}@github.com/olaria01/happyproject.git source
+          cd source
+          echo "SOURCE_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "BUILD_TIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Build binaries
+        working-directory: source
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: |
+          # Build crawler
+          go build -ldflags="-s -w" -o ../jiuselu_crawler_linux_amd64 ./cmd/crawler
+
+          # Build server
+          go build -ldflags="-s -w" -o ../jiuselu_server_linux_amd64 ./cmd/server
+
+      - name: Create checksums
+        run: |
+          sha256sum jiuselu_crawler_linux_amd64 > checksums.txt
+          sha256sum jiuselu_server_linux_amd64 >> checksums.txt
+
+      - name: Copy install script
+        run: |
+          cp source/install.sh ./install.sh || echo '#!/bin/bash
+          echo "Install script"' > install.sh
+
+      - name: Generate version tag
+        id: version
+        run: |
+          VERSION="v$(date +'%Y.%m.%d')-${SOURCE_SHA}"
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${VERSION}"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: ${{ steps.version.outputs.VERSION }}
+          body: |
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/olaria01/hpp/main/install.sh | bash
+            ```
+          files: |
+            jiuselu_crawler_linux_amd64
+            jiuselu_server_linux_amd64
+            checksums.txt
+            install.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
