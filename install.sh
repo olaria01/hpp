@@ -120,9 +120,38 @@ verify_checksums() {
 }
 
 install_binaries() {
-    info "安装二进制文件到 $INSTALL_DIR..."
-
     cd "$DOWNLOAD_DIR"
+
+    # 如果当前目录下有 jiuselu_server，说明是项目部署目录，直接更新
+    if [ -f "$ORIGINAL_DIR/jiuselu_server" ]; then
+        info "检测到项目部署目录，正在原地更新文件..."
+        
+        # 更新 Server
+        info "更新 $ORIGINAL_DIR/jiuselu_server"
+        rm -f "$ORIGINAL_DIR/jiuselu_server"
+        mv jiuselu_server_linux_amd64 "$ORIGINAL_DIR/jiuselu_server"
+        chmod +x "$ORIGINAL_DIR/jiuselu_server"
+        
+        # 更新 Crawler (注意文件名一般是 jiuselu_crawler_bin)
+        if [ -f "$ORIGINAL_DIR/jiuselu_crawler_bin" ]; then
+            info "更新 $ORIGINAL_DIR/jiuselu_crawler_bin"
+            rm -f "$ORIGINAL_DIR/jiuselu_crawler_bin"
+            mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu_crawler_bin"
+            chmod +x "$ORIGINAL_DIR/jiuselu_crawler_bin"
+        else
+            # 如果没有 _bin 后缀，尝试标准名称
+            info "更新 $ORIGINAL_DIR/jiuselu_crawler"
+            rm -f "$ORIGINAL_DIR/jiuselu-crawler" 2>/dev/null || true
+            mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu-crawler" 2>/dev/null || mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu_crawler"
+            chmod +x "$ORIGINAL_DIR/jiuselu_crawler" 2>/dev/null || chmod +x "$ORIGINAL_DIR/jiuselu-crawler"
+        fi
+        
+        info "✅ 本地文件更新完成"
+        return
+    fi
+
+    # 否则安装到系统目录
+    info "安装二进制文件到 $INSTALL_DIR..."
 
     if [ ! -w "$INSTALL_DIR" ]; then
         warn "需要 sudo 权限安装到 $INSTALL_DIR"
@@ -131,10 +160,13 @@ install_binaries() {
         SUDO=""
     fi
 
+    # 清理旧文件并移动新文件 (rm 用于避免 Text file busy)
+    $SUDO rm -f "$INSTALL_DIR/jiuselu-crawler"
     $SUDO mv jiuselu_crawler_linux_amd64 "$INSTALL_DIR/jiuselu-crawler"
     $SUDO chmod +x "$INSTALL_DIR/jiuselu-crawler"
     info "已安装 jiuselu-crawler"
 
+    $SUDO rm -f "$INSTALL_DIR/jiuselu-server"
     $SUDO mv jiuselu_server_linux_amd64 "$INSTALL_DIR/jiuselu-server"
     $SUDO chmod +x "$INSTALL_DIR/jiuselu-server"
     info "已安装 jiuselu-server"
@@ -205,6 +237,7 @@ show_completion() {
 }
 
 main() {
+    ORIGINAL_DIR=$(pwd)
     info "酒色鹿爬虫项目 - 一键安装脚本"
     echo ""
 
