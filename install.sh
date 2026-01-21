@@ -206,11 +206,11 @@ restart_services() {
         return
     fi
     
-    # 查找 jiuselu_server 容器（排除 mysql）
-    local containers=$(docker ps --filter "name=jiuselu_server" --format "{{.Names}}" 2>/dev/null)
+    # 查找 jiuselu 相关容器（排除 mysql）
+    local containers=$(docker ps --filter "name=jiuselu" --format "{{.Names}}" 2>/dev/null | grep -v "jiuselu_mysql")
     
     if [ -z "$containers" ]; then
-        warn "未检测到运行中的 jiuselu_server 容器"
+        warn "未检测到运行中的 jiuselu 服务容器"
         return
     fi
     
