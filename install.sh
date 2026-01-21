@@ -169,25 +169,9 @@ restart_services() {
         echo "  - $container"
     done
     
-    # 询问是否重启
-    if [ -t 0 ]; then
-        echo ""
-        read -p "$(echo -e ${YELLOW}[PROMPT]${NC} 是否重启这些容器以应用更新？ [y/N]: )" -n 1 -r
-        echo ""
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            info "跳过服务重启"
-            return
-        fi
-    else
-        # 非交互模式下，如果设置了环境变量则自动重启
-        if [ "$AUTO_RESTART" != "true" ]; then
-            info "非交互模式，跳过服务重启（设置 AUTO_RESTART=true 自动重启）"
-            return
-        fi
-    fi
-    
-    # 重启容器
-    info "重启服务中..."
+    # 自动重启容器
+    echo ""
+    info "自动重启服务中..."
     echo "$containers" | while read container; do
         if docker restart "$container" >/dev/null 2>&1; then
             info "✓ 已重启: $container"
@@ -215,11 +199,8 @@ show_completion() {
     echo "  jiuselu-server          # 启动 API 服务器"
     echo ""
     info "更新提示:"
-    echo "  # 重新运行此脚本即可更新到最新版本"
+    echo "  # 重新运行此脚本即可更新到最新版本（自动重启服务）"
     echo "  curl -fsSL https://raw.githubusercontent.com/$GITHUB_REPO/main/install.sh | bash"
-    echo ""
-    echo "  # 自动重启服务（非交互模式）"
-    echo "  curl -fsSL https://raw.githubusercontent.com/$GITHUB_REPO/main/install.sh | AUTO_RESTART=true bash"
     echo ""
 }
 
