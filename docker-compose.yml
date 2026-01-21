@@ -35,6 +35,11 @@ services:
     command: /app/jiuselu_server -c /app/config.yaml
     environment:
       - TZ=Asia/Shanghai
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${MYSQL_USER:-crawler}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-crawler123}
+      - DB_NAME=${MYSQL_DATABASE:-jiuselu}
     networks:
       - jiuselu_network
     healthcheck:
@@ -57,6 +62,11 @@ services:
     working_dir: /app
     environment:
       - TZ=Asia/Shanghai
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${MYSQL_USER:-crawler}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-crawler123}
+      - DB_NAME=${MYSQL_DATABASE:-jiuselu}
     networks:
       - jiuselu_network
     command: >
