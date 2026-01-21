@@ -100,6 +100,12 @@ download_binaries() {
         -O docker-compose.yml \
         || warn "下载 docker-compose.yml 失败，跳过"
 
+    info "下载 .env.example..."
+    wget -q \
+        "https://raw.githubusercontent.com/$GITHUB_REPO/main/.env.example" \
+        -O .env.example \
+        || warn "下载 .env.example 失败，跳过"
+
     info "下载 checksums..."
     wget -q \
         "https://github.com/$GITHUB_REPO/releases/download/$LATEST_VERSION/checksums.txt" \
@@ -161,6 +167,17 @@ install_binaries() {
             else
                 info "创建 $ORIGINAL_DIR/docker-compose.yml"
                 cp docker-compose.yml "$ORIGINAL_DIR/docker-compose.yml"
+            fi
+        fi
+        
+        # 创建 .env 文件（如果不存在）
+        if [ -f ".env.example" ]; then
+            if [ ! -f "$ORIGINAL_DIR/.env" ]; then
+                info "创建 $ORIGINAL_DIR/.env"
+                cp .env.example "$ORIGINAL_DIR/.env"
+                warn "请编辑 .env 文件修改数据库密码等敏感信息"
+            else
+                info ".env 文件已存在，跳过创建"
             fi
         fi
         
