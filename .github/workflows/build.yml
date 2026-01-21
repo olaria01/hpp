@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Clone private repository
         env:
-          PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          PRIVATE_TOKEN: ${{ secrets.PRIVATE_TOKEN }}
         run: |
           git clone https://${PRIVATE_TOKEN}@github.com/olaria01/happyproject.git source
           cd source
