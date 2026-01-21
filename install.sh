@@ -125,6 +125,7 @@ install_binaries() {
     # 如果当前目录下有 jiuselu_server，说明是项目部署目录，直接更新
     if [ -f "$ORIGINAL_DIR/jiuselu_server" ]; then
         info "检测到项目部署目录，正在原地更新文件..."
+        IS_UPDATE="true"
         
         # 更新 Server
         info "更新 $ORIGINAL_DIR/jiuselu_server"
@@ -218,26 +219,37 @@ restart_services() {
 show_completion() {
     echo ""
     info "============================================"
-    info "安装完成！"
-    info "============================================"
-    echo ""
-    info "已安装以下命令:"
-    echo "  - jiuselu-crawler: 爬虫程序"
-    echo "  - jiuselu-server:  API 服务器"
-    echo ""
-    info "使用方法:"
-    echo "  jiuselu-crawler full    # 运行全量爬取"
-    echo "  jiuselu-crawler incr    # 运行增量爬取"
-    echo "  jiuselu-server          # 启动 API 服务器"
-    echo ""
-    info "更新提示:"
-    echo "  # 重新运行此脚本即可更新到最新版本（自动重启服务）"
-    echo "  curl -fsSL https://raw.githubusercontent.com/$GITHUB_REPO/main/install.sh | bash"
+    
+    if [ "$IS_UPDATE" = "true" ]; then
+        info "更新完成！"
+        info "============================================"
+        info "当前版本: $LATEST_VERSION"
+        info "已原地更新二进制文件"
+        info "服务已自动重启"
+    else
+        info "安装完成！"
+        info "============================================"
+        echo ""
+        info "已安装以下命令:"
+        echo "  - jiuselu-crawler: 爬虫程序"
+        echo "  - jiuselu-server:  API 服务器"
+        echo ""
+        info "使用方法:"
+        echo "  jiuselu-crawler full    # 运行全量爬取"
+        echo "  jiuselu-crawler incr    # 运行增量爬取"
+        echo "  jiuselu-server          # 启动 API 服务器"
+        echo ""
+        info "更新提示:"
+        echo "  # 重新运行此脚本即可更新到最新版本（自动重启服务）"
+        echo "  curl -fsSL https://raw.githubusercontent.com/$GITHUB_REPO/main/install.sh | bash"
+    fi
     echo ""
 }
 
 main() {
     ORIGINAL_DIR=$(pwd)
+    IS_UPDATE="false"
+    
     info "酒色鹿爬虫项目 - 一键安装脚本"
     echo ""
 
