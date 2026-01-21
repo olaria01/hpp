@@ -145,19 +145,11 @@ install_binaries() {
         mv jiuselu_server_linux_amd64 "$ORIGINAL_DIR/jiuselu_server"
         chmod +x "$ORIGINAL_DIR/jiuselu_server"
         
-        # 更新 Crawler (注意文件名一般是 jiuselu_crawler_bin)
-        if [ -f "$ORIGINAL_DIR/jiuselu_crawler_bin" ]; then
-            info "更新 $ORIGINAL_DIR/jiuselu_crawler_bin"
-            rm -f "$ORIGINAL_DIR/jiuselu_crawler_bin"
-            mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu_crawler_bin"
-            chmod +x "$ORIGINAL_DIR/jiuselu_crawler_bin"
-        else
-            # 如果没有 _bin 后缀，尝试标准名称
-            info "更新 $ORIGINAL_DIR/jiuselu_crawler"
-            rm -f "$ORIGINAL_DIR/jiuselu-crawler" 2>/dev/null || true
-            mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu-crawler" 2>/dev/null || mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu_crawler"
-            chmod +x "$ORIGINAL_DIR/jiuselu_crawler" 2>/dev/null || chmod +x "$ORIGINAL_DIR/jiuselu-crawler"
-        fi
+        # 更新 Crawler（统一使用 jiuselu_crawler 文件名）
+        info "更新 $ORIGINAL_DIR/jiuselu_crawler"
+        rm -f "$ORIGINAL_DIR/jiuselu_crawler" "$ORIGINAL_DIR/jiuselu_crawler_bin" "$ORIGINAL_DIR/jiuselu-crawler" 2>/dev/null || true
+        mv jiuselu_crawler_linux_amd64 "$ORIGINAL_DIR/jiuselu_crawler"
+        chmod +x "$ORIGINAL_DIR/jiuselu_crawler"
         
         # 更新 docker-compose.yml
         if [ -f "docker-compose.yml" ]; then
