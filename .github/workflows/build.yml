@@ -18,6 +18,12 @@ jobs:
         run: |
           git clone https://${PRIVATE_TOKEN}@github.com/olaria01/happyproject.git source
           cd source
+          
+          # 如果有指定的 SHA，检出该 commit
+          if [ -n "${{ github.event.client_payload.sha }}" ]; then
+            git checkout "${{ github.event.client_payload.sha }}"
+          fi
+          
           echo "SOURCE_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "BUILD_TIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
@@ -52,7 +58,11 @@ jobs:
       - name: Generate version tag
         id: version
         run: |
-          VERSION="v$(date +'%Y.%m.%d')-${SOURCE_SHA}"
+          if [ -n "${{ github.event.client_payload.version }}" ]; then
+            VERSION="${{ github.event.client_payload.version }}"
+          else
+            VERSION="v$(date +'%Y.%m.%d')-${SOURCE_SHA}"
+          fi
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           echo "Generated version: ${VERSION}"
 
