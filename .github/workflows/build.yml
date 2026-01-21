@@ -60,24 +60,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.VERSION }}
-          name: Release ${{ steps.version.outputs.VERSION }}
+          name: ${{ steps.version.outputs.VERSION }}
           body: |
-            ## 酒色鹿爬虫项目
-
-            构建时间: ${{ env.BUILD_TIME }}
-            源码提交: olaria01/happyproject@${{ env.SOURCE_SHA }}
-
-            ### 快速安装
-
             ```bash
             curl -fsSL https://raw.githubusercontent.com/olaria01/hpp/main/install.sh | bash
-            ```
-
-            ### 手动下载
-
-            ```bash
-            wget https://github.com/olaria01/hpp/releases/latest/download/jiuselu_crawler_linux_amd64
-            wget https://github.com/olaria01/hpp/releases/latest/download/jiuselu_server_linux_amd64
             ```
           files: |
             jiuselu_crawler_linux_amd64
